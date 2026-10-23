@@ -21,7 +21,7 @@ export const WorkerDashboard: React.FC = () => {
     hireRequests,
     acceptHireRequest,
     declineHireRequest,
-    completeJob,
+    workerMarkWorkCompleted,
     jobs,
     applications,
     applyToJob,
@@ -36,11 +36,11 @@ export const WorkerDashboard: React.FC = () => {
       hr.status?.toLowerCase() === 'pending'
   );
 
-  // Active (Accepted) job for this worker
+  // Active (Accepted or WorkCompleted) job for this worker
   const activeJob = hireRequests.find(
     (hr) =>
       (hr.workerId === currentWorker.id || (firebaseUser && hr.workerId === firebaseUser.uid)) &&
-      hr.status?.toLowerCase() === 'accepted'
+      (hr.status === 'Accepted' || hr.status === 'WorkCompleted')
   );
 
   // Recommended jobs based on primarySkill
@@ -217,8 +217,16 @@ export const WorkerDashboard: React.FC = () => {
       {activeJob && (
         <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/90 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded">
-              Current Assignment
+            <span
+              className={`text-xs font-semibold px-2.5 py-0.5 rounded ${
+                activeJob.status === 'WorkCompleted'
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {activeJob.status === 'WorkCompleted'
+                ? 'Work Completed · Awaiting Employer Conclusion'
+                : 'Current Assignment (In Progress)'}
             </span>
             <span className="text-xs text-slate-500">
               Started: {activeJob.startDate}
@@ -251,6 +259,22 @@ export const WorkerDashboard: React.FC = () => {
             </div>
           </div>
 
+          {activeJob.status === 'WorkCompleted' ? (
+            <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 text-xs text-amber-800 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold">
+                <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Work submitted! Awaiting employer conclusion</span>
+              </div>
+              <p className="text-[11px] text-amber-700 leading-relaxed">
+                You marked this work as completed. Your employer has been notified to inspect and conclude the assignment. Once concluded, your availability will reset to Available.
+              </p>
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-500 italic">
+              When you have finished the tasks for this assignment, mark work complete. Your employer will review and conclude the assignment.
+            </p>
+          )}
+
           <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
             <a
               href={`tel:${activeJob.employerPhone}`}
@@ -260,13 +284,20 @@ export const WorkerDashboard: React.FC = () => {
               Call Employer
             </a>
 
-            <button
-              onClick={() => completeJob(activeJob.id)}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs sm:text-sm py-2 px-3.5 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              Conclude Job
-            </button>
+            {activeJob.status === 'WorkCompleted' ? (
+              <div className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-800 bg-amber-100/80 px-3 py-2 rounded-lg">
+                <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                <span>Pending Employer Conclusion</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => workerMarkWorkCompleted(activeJob.id)}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs sm:text-sm py-2 px-3.5 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Mark Work Complete
+              </button>
+            )}
           </div>
         </div>
       )}

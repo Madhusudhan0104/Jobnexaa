@@ -17,6 +17,7 @@ export const EmployerMyJobs: React.FC = () => {
     jobs,
     currentEmployer,
     applications,
+    hireRequests,
     setApplicantsJobId,
     setIsPostJobOpen,
     firebaseUser,
@@ -206,6 +207,14 @@ export const EmployerMyJobs: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {hireRequests.some(
+                      (hr) => hr.jobId === job.id && hr.status === 'WorkCompleted'
+                    ) && (
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-1 rounded-lg animate-pulse">
+                        Worker finished · Ready to conclude
+                      </span>
+                    )}
+
                     <button
                       onClick={() => setApplicantsJobId(job.id)}
                       className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#1A3C6E] hover:bg-[#15315B] px-3.5 py-2 rounded-xl shadow-sm transition-transform active:scale-95"

@@ -71,6 +71,7 @@ interface AppContextType {
       businessType?: string;
     }
   ) => Promise<{ success: boolean; notRegistered?: boolean; error?: string }>;
+  signInAsDemoUser: (demoRole: UserRole) => Promise<void>;
   signInWithEmail?: (
     emailOrUsername: string,
     password: string
@@ -158,6 +159,8 @@ interface AppContextType {
   acceptHireRequest: (requestId: string) => Promise<void>;
   declineHireRequest: (requestId: string) => Promise<void>;
   completeJob: (requestId: string) => Promise<void>;
+  workerMarkWorkCompleted: (requestId: string) => Promise<void>;
+  employerConcludeWork: (requestId: string) => Promise<void>;
   applyToJob: (jobId: string) => void;
   acceptApplication: (applicationId: string) => void;
   declineApplication: (applicationId: string) => void;
@@ -598,12 +601,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { success: true };
       }
     } catch (err: any) {
-      console.error('Google Auth error:', err);
+      console.warn('Google Auth notice:', err?.code || err?.message);
       let errorMsg = 'Google authentication was cancelled or failed. Please try again.';
       if (err.code === 'auth/popup-closed-by-user') {
         errorMsg = 'Sign in popup was closed. Please try again.';
+      } else if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+        const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'current domain';
+        errorMsg = `Google OAuth Domain Authorization Required: "${currentHost}" is not listed in Firebase Console -> Authentication -> Settings -> Authorized Domains. Use Instant Demo Sign-In or Email/Password below.`;
       }
       return { success: false, error: errorMsg };
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // Instant Demo Login (Works 100% offline & without Google OAuth domain whitelisting)
+  const signInAsDemoUser = async (demoRole: UserRole) => {
+    setAuthLoading(true);
+    try {
+      setRoleState(demoRole);
+      if (demoRole === 'worker') {
+        setActiveWorkerId('demo-worker-1');
+        showToast('Signed in as Ravi Kumar (Verified Demo Worker)');
+      } else {
+        setActiveEmployerId('demo-employer-1');
+        showToast('Signed in as Brigade Construction (Verified Demo Employer)');
+      }
+      setIsAuthenticated(true);
+      setIsNewUserOnboarding(false);
     } finally {
       setAuthLoading(false);
     }
@@ -1168,8 +1193,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Hire request declined.');
   };
 
-  // Mark job completed
-  const completeJob = async (requestId: string) => {
+  // 1. Worker marks work as completed (submits to employer, does not conclude)
+  const workerMarkWorkCompleted = async (requestId: string) => {
+    const req = hireRequests.find((r) => r.id === requestId);
+    if (!req) return;
+
+    setHireRequests((prev) =>
+      prev.map((r) => (r.id === requestId ? { ...r, status: 'WorkCompleted' } : r))
+    );
+
+    try {
+      await updateDoc(doc(db, 'hireRequests', requestId), { status: 'WorkCompleted' });
+    } catch (error) {
+      console.error('Error updating work status in Firestore:', error);
+    }
+
+    // Notify Employer that worker has completed the work and it awaits employer conclusion
+    const notif: NotificationItem = {
+      id: `notif-${Date.now()}`,
+      recipientRole: 'employer',
+      recipientId: req.employerId,
+      title: 'Work Completed by Worker 🛠️',
+      message: `${req.workerName} has completed work for "${req.jobTitle}". Please review and conclude the assignment.`,
+      type: 'completion',
+      read: false,
+      timestamp: 'Just now',
+      actionTab: 'home',
+    };
+    setNotifications((prev) => [notif, ...prev]);
+
+    showToast('Work marked as complete! Employer notified to conclude assignment.');
+  };
+
+  // 2. Employer concludes the work (worker availability reset to available, review modal opened)
+  const employerConcludeWork = async (requestId: string) => {
     const req = hireRequests.find((r) => r.id === requestId);
     if (!req) return;
 
@@ -1183,7 +1240,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ? {
               ...w,
               availabilityStatus: 'available',
-              completedJobsCount: w.completedJobsCount + 1,
+              completedJobsCount: (w.completedJobsCount || 0) + 1,
             }
           : w
       )
@@ -1191,30 +1248,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     try {
       await updateDoc(doc(db, 'hireRequests', requestId), { status: 'Completed' });
-      await updateDoc(doc(db, 'users', req.workerId), { availabilityStatus: 'available' });
+      await updateDoc(doc(db, 'users', req.workerId), {
+        availabilityStatus: 'available',
+      });
     } catch (error) {
-      console.error('Error completing job in Firestore:', error);
+      console.error('Error concluding job in Firestore:', error);
     }
 
-    if (role === 'worker') {
-      setReviewModalData({
-        isOpen: true,
-        jobTitle: req.jobTitle,
-        targetId: req.employerId,
-        targetName: req.employerName,
-        reviewerRole: 'worker',
-      });
-    } else {
-      setReviewModalData({
-        isOpen: true,
-        jobTitle: req.jobTitle,
-        targetId: req.workerId,
-        targetName: req.workerName,
-        reviewerRole: 'employer',
-      });
-    }
+    // Notify worker that employer has concluded the work
+    const notif: NotificationItem = {
+      id: `notif-${Date.now()}`,
+      recipientRole: 'worker',
+      recipientId: req.workerId,
+      title: 'Assignment Concluded! 🎉',
+      message: `${req.employerName} has concluded the assignment for "${req.jobTitle}". Your status is now reset to Available.`,
+      type: 'completion',
+      read: false,
+      timestamp: 'Just now',
+      actionTab: 'requests',
+    };
+    setNotifications((prev) => [notif, ...prev]);
 
-    showToast(`Job completed! Worker status reset to Available.`);
+    // Open review modal for employer to review worker
+    setReviewModalData({
+      isOpen: true,
+      jobTitle: req.jobTitle,
+      targetId: req.workerId,
+      targetName: req.workerName,
+      reviewerRole: 'employer',
+    });
+
+    showToast(`Assignment concluded! Worker status reset to Available.`);
+  };
+
+  // Backwards-compatible alias for conclusion
+  const completeJob = async (requestId: string) => {
+    await employerConcludeWork(requestId);
   };
 
   // Worker applies to job
@@ -1559,6 +1628,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isNewUserOnboarding,
         onboardingUser,
         signInWithGoogle,
+        signInAsDemoUser,
         signInWithEmail,
         signUpWithEmail,
         isEmailVerified,
@@ -1615,6 +1685,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         acceptHireRequest,
         declineHireRequest,
         completeJob,
+        workerMarkWorkCompleted,
+        employerConcludeWork,
         applyToJob,
         acceptApplication,
         declineApplication,

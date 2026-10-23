@@ -20,7 +20,7 @@ export const WorkerHireRequests: React.FC = () => {
     firebaseUser,
     acceptHireRequest,
     declineHireRequest,
-    completeJob,
+    workerMarkWorkCompleted,
     setReviewModalData,
     reviews,
   } = useApp();
@@ -35,11 +35,13 @@ export const WorkerHireRequests: React.FC = () => {
   );
 
   const pendingRequests = myRequests.filter((r) => r.status?.toLowerCase() === 'pending');
-  const activeRequests = myRequests.filter((r) => r.status?.toLowerCase() === 'accepted');
+  const activeRequests = myRequests.filter(
+    (r) => r.status === 'Accepted' || r.status === 'WorkCompleted'
+  );
   const historyRequests = myRequests.filter(
     (r) =>
-      r.status?.toLowerCase() === 'completed' ||
-      r.status?.toLowerCase() === 'declined'
+      r.status === 'Completed' ||
+      r.status === 'Declined'
   );
 
   return (
@@ -211,13 +213,25 @@ export const WorkerHireRequests: React.FC = () => {
             activeRequests.map((req) => (
               <div
                 key={req.id}
-                className="bg-white rounded-2xl p-4 sm:p-5 border-2 border-emerald-500/80 shadow-sm space-y-4"
+                className={`bg-white rounded-2xl p-4 sm:p-5 border-2 shadow-sm space-y-4 ${
+                  req.status === 'WorkCompleted'
+                    ? 'border-amber-400 bg-amber-50/20'
+                    : 'border-emerald-500/80'
+                }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        In Progress
+                      <span
+                        className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                          req.status === 'WorkCompleted'
+                            ? 'text-amber-800 bg-amber-100'
+                            : 'text-emerald-800 bg-emerald-100'
+                        }`}
+                      >
+                        {req.status === 'WorkCompleted'
+                          ? 'Work Completed · Awaiting Employer Conclusion'
+                          : 'In Progress'}
                       </span>
                       <span className="text-xs text-slate-500">
                         Since {req.startDate}
@@ -246,9 +260,21 @@ export const WorkerHireRequests: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Engagement: <strong>Active (Days or Years until agreed to part ways)</strong></span>
+                    <span>Engagement: <strong>Active (Concluded by Employer upon task completion)</strong></span>
                   </div>
                 </div>
+
+                {req.status === 'WorkCompleted' && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <Clock className="w-4 h-4 text-amber-600" />
+                      <span>Work submitted for employer conclusion</span>
+                    </div>
+                    <p className="text-[11px] text-amber-700">
+                      You completed this work. The employer has been prompted to inspect and conclude the assignment. You cannot conclude it yourself.
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                   <a
@@ -259,13 +285,20 @@ export const WorkerHireRequests: React.FC = () => {
                     Call Employer
                   </a>
 
-                  <button
-                    onClick={() => completeJob(req.id)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm py-2 px-4 rounded-xl shadow-sm transition-transform active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    Conclude Assignment & Part Ways
-                  </button>
+                  {req.status === 'WorkCompleted' ? (
+                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 bg-amber-100 px-3.5 py-2 rounded-xl">
+                      <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                      <span>Awaiting Employer Conclusion</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => workerMarkWorkCompleted(req.id)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm py-2 px-4 rounded-xl shadow-sm transition-transform active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Mark Work Completed
+                    </button>
+                  )}
                 </div>
               </div>
             ))

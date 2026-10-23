@@ -58,9 +58,9 @@ export const TopBar: React.FC = () => {
         {/* Brand Zone */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           <img
-            src="/src/assets/images/jobnexa_app_logo_1792756453498.jpg"
+            src="/src/assets/images/logo.svg"
             alt="Jobnexa Logo"
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-cover shadow-xs border border-slate-200/80"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-contain shadow-xs"
             referrerPolicy="no-referrer"
           />
           <div className="flex flex-col">

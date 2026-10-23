@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Briefcase,
   CheckCircle2,
+  Clock,
   MapPin,
   Star,
   UserCheck,
@@ -17,8 +18,10 @@ export const JobApplicantsModal: React.FC = () => {
     setApplicantsJobId,
     jobs,
     applications,
+    hireRequests,
     acceptApplication,
     declineApplication,
+    employerConcludeWork,
     setSelectedWorkerId,
   } = useApp();
 
@@ -200,33 +203,73 @@ export const JobApplicantsModal: React.FC = () => {
                 No workers hired for this posting yet.
               </div>
             ) : (
-              hiredApplicants.map((app) => (
-                <div
-                  key={app.id}
-                  className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200 shadow-sm flex items-center justify-between gap-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={app.workerAvatar}
-                      alt={app.workerName}
-                      className="w-10 h-10 rounded-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">
-                        {app.workerName} ({app.workerSkill})
-                      </h4>
-                      <span className="text-[11px] text-emerald-800 font-medium">
-                        Hired for this assignment at ₹{app.expectedWage}/day
-                      </span>
+              hiredApplicants.map((app) => {
+                const hireReq = hireRequests.find(
+                  (hr) => hr.jobId === job.id && hr.workerId === app.workerId
+                );
+                const isWorkCompleted = hireReq?.status === 'WorkCompleted';
+                const isConcluded = hireReq?.status === 'Completed';
+
+                return (
+                  <div
+                    key={app.id}
+                    className={`p-3.5 rounded-2xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      isWorkCompleted
+                        ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-300'
+                        : isConcluded
+                        ? 'bg-slate-50 border-slate-200'
+                        : 'bg-emerald-50/50 border-emerald-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={app.workerAvatar}
+                        alt={app.workerName}
+                        className="w-10 h-10 rounded-full object-cover shrink-0"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-sm font-bold text-slate-900">
+                            {app.workerName} ({app.workerSkill})
+                          </h4>
+                          {isWorkCompleted && (
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-amber-700 animate-pulse" />
+                              Worker Completed Work · Ready to Conclude
+                            </span>
+                          )}
+                          {isConcluded && (
+                            <span className="text-[10px] font-semibold text-slate-700 bg-slate-200 px-2 py-0.5 rounded-full">
+                              Concluded
+                            </span>
+                          )}
+                          {!isWorkCompleted && !isConcluded && (
+                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                              Active on Job
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-600 font-medium block mt-0.5">
+                          Hired for this assignment at ₹{app.expectedWage}/day
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                      {!isConcluded && hireReq && (
+                        <button
+                          onClick={() => employerConcludeWork(hireReq.id)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-1.5 px-3.5 rounded-xl shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Conclude Work</span>
+                        </button>
+                      )}
                     </div>
                   </div>
-
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
-                    Active on Job
-                  </span>
-                </div>
-              ))
+                );
+              })
             )
           )}
         </div>

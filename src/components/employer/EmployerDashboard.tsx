@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import {
+  AlertCircle,
   BarChart3,
   Briefcase,
+  CheckCircle2,
   ChevronRight,
   Clock,
   Compass,
   MapPin,
+  Phone,
   Plus,
   Search,
   Users,
@@ -27,6 +30,7 @@ export const EmployerDashboard: React.FC = () => {
     setSelectedJobId,
     setSelectedWorkerId,
     firebaseUser,
+    employerConcludeWork,
   } = useApp();
 
   const [selectedSkill, setSelectedSkill] = useState<SkillCategory>('Plumber');
@@ -52,6 +56,15 @@ export const EmployerDashboard: React.FC = () => {
   const recentRequests = hireRequests.filter(
     (r) => r.employerId === currentEmployer.id || (firebaseUser && r.employerId === firebaseUser.uid)
   );
+
+  // Active workforce assignments and pending work conclusions
+  const activeEngagements = hireRequests.filter(
+    (r) =>
+      (r.employerId === currentEmployer.id || (firebaseUser && r.employerId === firebaseUser.uid)) &&
+      (r.status === 'WorkCompleted' || r.status === 'Accepted')
+  );
+
+  const awaitingConclusion = activeEngagements.filter((r) => r.status === 'WorkCompleted');
 
   return (
     <div className="space-y-4 pb-6">
@@ -184,6 +197,89 @@ export const EmployerDashboard: React.FC = () => {
           Browse Directory →
         </button>
       </div>
+
+      {/* Active Workforce & Conclude Work Section */}
+      {activeEngagements.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              Active Engagements & Conclude Work ({activeEngagements.length})
+            </h2>
+            {awaitingConclusion.length > 0 && (
+              <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                {awaitingConclusion.length} Waiting for your conclusion
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-2.5">
+            {activeEngagements.map((req) => {
+              const isWorkDone = req.status === 'WorkCompleted';
+              return (
+                <div
+                  key={req.id}
+                  className={`rounded-xl p-4 border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
+                    isWorkDone
+                      ? 'bg-amber-50/70 border-amber-300 ring-1 ring-amber-300'
+                      : 'bg-white border-slate-200/90'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={req.workerAvatar}
+                      alt={req.workerName}
+                      className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-xs shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-bold text-slate-900">
+                          {req.workerName}
+                        </h4>
+                        <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.2 rounded">
+                          {req.workerSkill}
+                        </span>
+                        {isWorkDone ? (
+                          <span className="text-[10px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-700 animate-pulse" />
+                            Worker Completed Work · Ready to Conclude
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            Active in Progress
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-slate-600 mt-1">
+                        <strong>{req.jobTitle}</strong> · ₹{req.proposedWage}/day · {req.location}
+                      </p>
+
+                      {isWorkDone && (
+                        <p className="text-[11px] text-amber-800 font-medium mt-1">
+                          👉 The worker has marked this work complete. Conclude the assignment to release their status back to Available and leave a review.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    <button
+                      onClick={() => employerConcludeWork(req.id)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Conclude Work</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Active Job Posts Section */}
       <div className="space-y-3">
@@ -325,23 +421,37 @@ export const EmployerDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span
-                    className={`text-[11px] font-medium px-2 py-0.5 rounded ${
-                      req.status === 'Accepted'
-                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                        : req.status === 'Completed'
-                        ? 'bg-slate-100 text-slate-800 border border-slate-200'
-                        : req.status === 'Declined'
-                        ? 'bg-red-50 text-red-800 border border-red-200'
-                        : 'bg-amber-50 text-amber-800 border border-amber-200'
-                    }`}
-                  >
-                    {req.status}
-                  </span>
-                  <span className="text-[10px] text-slate-400 block mt-0.5">
-                    {req.createdAt}
-                  </span>
+                <div className="flex items-center gap-2.5 text-right">
+                  <div>
+                    <span
+                      className={`text-[11px] font-medium px-2 py-0.5 rounded ${
+                        req.status === 'WorkCompleted'
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300 font-bold'
+                          : req.status === 'Accepted'
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold'
+                          : req.status === 'Completed'
+                          ? 'bg-slate-100 text-slate-800 border border-slate-200'
+                          : req.status === 'Declined'
+                          ? 'bg-red-50 text-red-800 border border-red-200'
+                          : 'bg-amber-50 text-amber-800 border border-amber-200'
+                      }`}
+                    >
+                      {req.status === 'WorkCompleted' ? 'Work Done · Conclude' : req.status}
+                    </span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                      {req.createdAt}
+                    </span>
+                  </div>
+
+                  {(req.status === 'WorkCompleted' || req.status === 'Accepted') && (
+                    <button
+                      onClick={() => employerConcludeWork(req.id)}
+                      className="text-xs font-semibold text-emerald-700 hover:text-white bg-emerald-50 hover:bg-emerald-600 border border-emerald-200 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      title="Conclude this work assignment"
+                    >
+                      Conclude
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

@@ -38,9 +38,9 @@ const MainContent: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center text-slate-900 space-y-3">
         <img
-          src="/src/assets/images/jobnexa_app_logo_1792756453498.jpg"
+          src="/src/assets/images/logo.svg"
           alt="Jobnexa Logo"
-          className="w-12 h-12 rounded-2xl object-cover shadow-xs border border-slate-200"
+          className="w-14 h-14 rounded-2xl object-contain shadow-md"
           referrerPolicy="no-referrer"
         />
         <div className="flex items-center gap-2 text-xs font-medium text-slate-500">

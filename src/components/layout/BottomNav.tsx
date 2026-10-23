@@ -22,6 +22,7 @@ export const BottomNav: React.FC = () => {
     setActiveEmployerTab,
     hireRequests,
     currentWorker,
+    currentEmployer,
     firebaseUser,
     notifications,
     applications,
@@ -43,6 +44,13 @@ export const BottomNav: React.FC = () => {
   // Pending applications on open jobs for employer
   const pendingAppsCount = applications.filter(
     (a) => a.status === 'Pending'
+  ).length;
+
+  // Workers who completed work awaiting employer conclusion
+  const pendingConclusionsCount = hireRequests.filter(
+    (hr) =>
+      (hr.employerId === currentEmployer.id || (firebaseUser && hr.employerId === firebaseUser.uid)) &&
+      hr.status === 'WorkCompleted'
   ).length;
 
   if (role === 'worker') {
@@ -107,7 +115,7 @@ export const BottomNav: React.FC = () => {
 
   // Employer navigation tabs
   const employerTabs: { id: EmployerTab; label: string; icon: React.FC<{ className?: string }>; badge?: number }[] = [
-    { id: 'home', label: 'Overview', icon: Home },
+    { id: 'home', label: 'Overview', icon: Home, badge: pendingConclusionsCount },
     { id: 'availability', label: 'Availability', icon: BarChart3 },
     { id: 'workers', label: 'Workers', icon: Users },
     { id: 'my-jobs', label: 'Jobs', icon: Briefcase, badge: pendingAppsCount },

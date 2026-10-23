@@ -5,10 +5,14 @@ import {
   Briefcase,
   Check,
   CheckCircle2,
+  Copy,
   Hammer,
+  Lock,
+  Mail,
   MapPin,
   Phone,
   ShieldCheck,
+  Sparkles,
   User,
   UserPlus,
   Wrench,
@@ -22,6 +26,9 @@ import { SkillCategory, UserRole } from '../../types.ts';
 export const AuthScreen: React.FC = () => {
   const {
     signInWithGoogle,
+    signInAsDemoUser,
+    signInWithEmail,
+    signUpWithEmail,
     authLoading,
   } = useApp();
 
@@ -32,6 +39,12 @@ export const AuthScreen: React.FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [notRegisteredNotice, setNotRegisteredNotice] = useState<boolean>(false);
   const [showAccountNotFoundModal, setShowAccountNotFoundModal] = useState<boolean>(false);
+
+  // Email / Password inputs
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [copiedDomain, setCopiedDomain] = useState(false);
 
   // Register state
   const [regName, setRegName] = useState('');
@@ -52,6 +65,16 @@ export const AuthScreen: React.FC = () => {
     'Electronic City',
     'Marathahalli',
   ];
+
+  const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
+
+  const copyHostname = () => {
+    if (navigator.clipboard && currentHostname) {
+      navigator.clipboard.writeText(currentHostname);
+      setCopiedDomain(true);
+      setTimeout(() => setCopiedDomain(false), 2500);
+    }
+  };
 
   // Sign In with Google
   const handleGoogleSignIn = async () => {
@@ -88,6 +111,45 @@ export const AuthScreen: React.FC = () => {
     }
   };
 
+  // Sign In with Email / Username & Password
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signInWithEmail) return;
+    if (!emailInput.trim() || !passwordInput.trim()) {
+      setLoginError('Please enter both email/username and password.');
+      return;
+    }
+    setLoginError(null);
+    const res = await signInWithEmail(emailInput.trim(), passwordInput.trim());
+    if (!res.success && res.error) {
+      setLoginError(res.error);
+    }
+  };
+
+  // Register with Email / Username & Password
+  const handleEmailRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signUpWithEmail) return;
+    if (!emailInput.trim() || !passwordInput.trim()) {
+      setRegError('Please provide an email and password to register.');
+      return;
+    }
+    if (passwordInput.length < 6) {
+      setRegError('Password must be at least 6 characters.');
+      return;
+    }
+    setRegError(null);
+    const res = await signUpWithEmail(emailInput.trim(), passwordInput.trim(), selectedRole, {
+      name: (selectedRole === 'worker' ? regName : regCompanyName).trim() || undefined,
+      phone: regPhone.trim() || undefined,
+      primarySkill: selectedRole === 'worker' ? regSkill : undefined,
+      area: regArea,
+    });
+    if (!res.success && res.error) {
+      setRegError(res.error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-between p-4 sm:p-6 select-none">
       
@@ -95,9 +157,9 @@ export const AuthScreen: React.FC = () => {
       <header className="max-w-5xl mx-auto w-full flex items-center justify-between py-3 border-b border-slate-200/60">
         <div className="flex items-center gap-3">
           <img
-            src="/src/assets/images/jobnexa_app_logo_1792756453498.jpg"
+            src="/src/assets/images/logo.svg"
             alt="Jobnexa Logo"
-            className="w-8 h-8 rounded-lg object-cover shadow-xs border border-slate-200/80"
+            className="w-8 h-8 rounded-xl object-contain shadow-xs"
             referrerPolicy="no-referrer"
           />
           <div>
@@ -121,11 +183,11 @@ export const AuthScreen: React.FC = () => {
         
         {/* Title & Brand Icon */}
         <div className="space-y-3">
-          <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shadow-xs">
+          <div className="w-12 h-12 rounded-xl overflow-hidden shadow-xs">
             <img
-              src="/src/assets/images/jobnexa_app_logo_1792756453498.jpg"
+              src="/src/assets/images/logo.svg"
               alt="Jobnexa"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               referrerPolicy="no-referrer"
             />
           </div>
@@ -214,19 +276,115 @@ export const AuthScreen: React.FC = () => {
             )}
 
             {!notRegisteredNotice && loginError && (
-              <div className="p-3 bg-red-50/80 border border-red-200 rounded-xl text-red-900 text-xs flex items-start gap-2 animate-in fade-in duration-150">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <p className="leading-relaxed font-medium">{loginError}</p>
+              <div
+                className={`p-3.5 rounded-xl text-xs space-y-2 animate-in fade-in duration-150 ${
+                  loginError.includes('Domain') || loginError.includes('unauthorized')
+                    ? 'bg-amber-50 border border-amber-300 text-amber-950'
+                    : 'bg-red-50/80 border border-red-200 text-red-900'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <AlertCircle
+                    className={`w-4 h-4 shrink-0 mt-0.5 ${
+                      loginError.includes('Domain') || loginError.includes('unauthorized')
+                        ? 'text-amber-700'
+                        : 'text-red-600'
+                    }`}
+                  />
+                  <div className="space-y-1 flex-1">
+                    <p className="leading-relaxed font-semibold">
+                      {loginError}
+                    </p>
+                    {(loginError.includes('Domain') || loginError.includes('unauthorized')) && (
+                      <div className="pt-1 space-y-2">
+                        <div className="flex items-center gap-2 bg-amber-100/70 p-1.5 rounded-lg border border-amber-200 font-mono text-[11px]">
+                          <span className="truncate">{currentHostname}</span>
+                          <button
+                            type="button"
+                            onClick={copyHostname}
+                            className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-amber-900 hover:underline shrink-0"
+                          >
+                            {copiedDomain ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedDomain ? 'Copied' : 'Copy Domain'}</span>
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-amber-800">
+                          Click below to bypass domain restriction and test all worker & employer workflows immediately:
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => signInAsDemoUser('worker')}
+                            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 px-2.5 rounded-lg text-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Hammer className="w-3.5 h-3.5" />
+                            <span>Demo Worker</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => signInAsDemoUser('employer')}
+                            className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-1.5 px-2.5 rounded-lg text-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Briefcase className="w-3.5 h-3.5 text-sky-400" />
+                            <span>Demo Employer</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
+            {/* Quick 1-Click Demo Access */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Instant 1-Click Demo Testing
+                </span>
+                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Ready to test
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Test all hiring, worker task completion, and employer conclusion features instantly without Google OAuth domain whitelisting:
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => signInAsDemoUser('worker')}
+                  disabled={authLoading}
+                  className="bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-semibold text-xs py-2 px-2.5 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                >
+                  <Hammer className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Demo Worker</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => signInAsDemoUser('employer')}
+                  disabled={authLoading}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2 px-2.5 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                >
+                  <Briefcase className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Demo Employer</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-slate-200"></div>
+              <span className="flex-shrink mx-2 text-[10px] uppercase font-bold text-slate-400">or sign in with</span>
+              <div className="flex-grow border-t border-slate-200"></div>
+            </div>
+
             {/* Google Sign In Button */}
-            <div className="pt-2">
+            <div>
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={authLoading}
-                className="w-full bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-semibold text-xs sm:text-sm py-3 px-4 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2.5 disabled:opacity-60 cursor-pointer"
+                className="w-full bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-semibold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2.5 disabled:opacity-60 cursor-pointer"
               >
                 {authLoading ? (
                   <span className="flex items-center gap-2 text-xs text-slate-600">
@@ -259,6 +417,67 @@ export const AuthScreen: React.FC = () => {
               </button>
             </div>
 
+            {/* Email / Password collapsible toggle */}
+            <div className="pt-1">
+              {!showEmailForm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowEmailForm(true)}
+                  className="w-full text-center text-xs font-semibold text-slate-600 hover:text-slate-900 py-1 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Sign in with Email or Username</span>
+                </button>
+              ) : (
+                <form onSubmit={handleEmailSignIn} className="space-y-2.5 pt-1">
+                  <div>
+                    <label className="text-[11px] font-medium text-slate-600 block mb-1">
+                      Email or Username
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                        <Mail className="w-3.5 h-3.5" />
+                      </div>
+                      <input
+                        type="text"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        placeholder="you@domain.com or username"
+                        className="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-medium text-slate-600 block mb-1">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                        <Lock className="w-3.5 h-3.5" />
+                      </div>
+                      <input
+                        type="password"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2 px-3 rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                  >
+                    <span>Sign In with Credentials</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </form>
+              )}
+            </div>
+
             <p className="text-[11px] text-center text-slate-500 pt-1">
               Protected by Google OAuth · Direct verified access
             </p>
@@ -284,9 +503,43 @@ export const AuthScreen: React.FC = () => {
           /* Tab 2: Register View */
           <div className="space-y-4">
             {regError && (
-              <div className="p-3 bg-red-50/80 border border-red-200 rounded-xl text-red-900 text-xs flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <p className="leading-relaxed font-medium">{regError}</p>
+              <div
+                className={`p-3.5 rounded-xl text-xs space-y-2 animate-in fade-in duration-150 ${
+                  regError.includes('Domain') || regError.includes('unauthorized')
+                    ? 'bg-amber-50 border border-amber-300 text-amber-950'
+                    : 'bg-red-50/80 border border-red-200 text-red-900'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <AlertCircle
+                    className={`w-4 h-4 shrink-0 mt-0.5 ${
+                      regError.includes('Domain') || regError.includes('unauthorized')
+                        ? 'text-amber-700'
+                        : 'text-red-600'
+                    }`}
+                  />
+                  <div className="space-y-1 flex-1">
+                    <p className="leading-relaxed font-semibold">{regError}</p>
+                    {(regError.includes('Domain') || regError.includes('unauthorized')) && (
+                      <div className="pt-1 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => signInAsDemoUser('worker')}
+                          className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 px-2.5 rounded-lg text-xs cursor-pointer"
+                        >
+                          Continue as Demo Worker
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => signInAsDemoUser('employer')}
+                          className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-1.5 px-2.5 rounded-lg text-xs cursor-pointer"
+                        >
+                          Continue as Demo Employer
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -487,7 +740,7 @@ export const AuthScreen: React.FC = () => {
                 type="button"
                 onClick={handleGoogleRegister}
                 disabled={authLoading}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm py-3 px-4 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2.5 disabled:opacity-60 cursor-pointer"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2.5 disabled:opacity-60 cursor-pointer"
               >
                 {authLoading ? (
                   <span className="flex items-center gap-2">
@@ -520,6 +773,77 @@ export const AuthScreen: React.FC = () => {
                   </>
                 )}
               </button>
+            </div>
+
+            {/* Email Registration Alternative */}
+            <div className="pt-1">
+              {!showEmailForm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowEmailForm(true)}
+                  className="w-full text-center text-xs font-semibold text-slate-600 hover:text-slate-900 py-1 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Or Register with Email & Password</span>
+                </button>
+              ) : (
+                <form onSubmit={handleEmailRegister} className="space-y-2.5 pt-1 border-t border-slate-100">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold pt-1">
+                    <span>Credentials Registration</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowEmailForm(false)}
+                      className="text-slate-400 hover:text-slate-700"
+                    >
+                      Hide
+                    </button>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-medium text-slate-600 block mb-1">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                        <Mail className="w-3.5 h-3.5" />
+                      </div>
+                      <input
+                        type="email"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        placeholder="you@domain.com"
+                        className="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-medium text-slate-600 block mb-1">
+                      Password (min 6 characters)
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                        <Lock className="w-3.5 h-3.5" />
+                      </div>
+                      <input
+                        type="password"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2 px-3 rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                  >
+                    <span>Create {selectedRole === 'worker' ? 'Worker' : 'Employer'} Account with Email</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </form>
+              )}
             </div>
 
             <p className="text-[11px] text-center text-slate-500 pt-1">

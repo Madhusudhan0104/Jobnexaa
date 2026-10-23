@@ -32,17 +32,201 @@ export const CITIES_AND_AREAS = {
   ],
 };
 
-// All fake mock profiles removed. Empty array defaults for real authenticated users only.
-export const INITIAL_WORKERS: WorkerProfile[] = [];
+export const INITIAL_WORKERS: WorkerProfile[] = [
+  {
+    id: 'demo-worker-1',
+    name: 'Ravi Kumar',
+    phone: '+91 98450 12345',
+    email: 'ravi.kumar@jobnexa.local',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=250&q=80',
+    primarySkill: 'Plumber',
+    secondarySkills: ['Appliance Repair', 'Mason'],
+    experienceYears: 6,
+    preferredJobTypes: ['Daily Wage', 'Contract'],
+    availabilityStatus: 'available',
+    city: 'Bangalore',
+    area: 'Koramangala',
+    expectedWage: 850,
+    wageType: 'day',
+    bio: 'Master Plumber with 6+ years experience across Koramangala and HSR Layout. Expert in pipe laying, leakage fixes, and water line fixtures.',
+    rating: 4.9,
+    reviewCount: 28,
+    completedJobsCount: 42,
+    pastExperience: [
+      {
+        id: 'exp-1',
+        title: 'Lead Pipeline Specialist',
+        companyOrClient: 'Prestige Falcon City',
+        duration: '2 Years',
+        description: 'Complete plumbing installation and sanitary line commissioning.',
+      },
+    ],
+  },
+  {
+    id: 'worker-2',
+    name: 'Anand Murthy',
+    phone: '+91 98860 67890',
+    email: 'anand.murthy@jobnexa.local',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+    primarySkill: 'Electrician',
+    secondarySkills: ['Appliance Repair'],
+    experienceYears: 5,
+    preferredJobTypes: ['Contract', 'Daily Wage'],
+    availabilityStatus: 'available',
+    city: 'Bangalore',
+    area: 'Indiranagar',
+    expectedWage: 900,
+    wageType: 'day',
+    bio: 'Licensed Class-1 Electrician. Residential wiring, MCB replacements, inverter installations, and 3-phase industrial connections.',
+    rating: 4.8,
+    reviewCount: 19,
+    completedJobsCount: 35,
+    pastExperience: [],
+  },
+  {
+    id: 'worker-3',
+    name: 'Manjunath Swamy',
+    phone: '+91 97410 45678',
+    email: 'manjunath.s@jobnexa.local',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+    primarySkill: 'Carpenter',
+    secondarySkills: ['Painter'],
+    experienceYears: 8,
+    preferredJobTypes: ['Contract'],
+    availabilityStatus: 'available',
+    city: 'Bangalore',
+    area: 'Whitefield',
+    expectedWage: 950,
+    wageType: 'day',
+    bio: 'Custom modular woodwork, door frame alignment, furniture repairs, and interior panelling.',
+    rating: 5.0,
+    reviewCount: 31,
+    completedJobsCount: 50,
+    pastExperience: [],
+  },
+];
 
-export const INITIAL_EMPLOYERS: EmployerProfile[] = [];
+export const INITIAL_EMPLOYERS: EmployerProfile[] = [
+  {
+    id: 'demo-employer-1',
+    name: 'Brigade Construction & Interiors',
+    contactPerson: 'Suresh Gowda',
+    phone: '+91 98860 54321',
+    email: 'suresh@brigade.local',
+    logo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=150&q=80',
+    businessType: 'Contractor / Construction',
+    city: 'Bangalore',
+    area: 'Koramangala',
+    description: 'Commercial and residential construction contractor in Bangalore hiring verified skilled labor.',
+    rating: 4.8,
+    reviewCount: 19,
+  },
+];
 
-export const INITIAL_JOBS: JobPosting[] = [];
+export const INITIAL_JOBS: JobPosting[] = [
+  {
+    id: 'job-101',
+    employerId: 'demo-employer-1',
+    employerName: 'Brigade Construction & Interiors',
+    employerLogo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=150&q=80',
+    employerRating: 4.8,
+    title: 'High-Rise Residential Plumbing Overhaul',
+    skillCategory: 'Plumber',
+    description: 'Looking for experienced plumbers for sanitary fixture replacement and main supply line testing across 12 residential units in Koramangala.',
+    responsibilities: [
+      'Assemble, install, and test water supply piping systems',
+      'Inspect drainage lines for pressure integrity and leakage',
+      'Coordinate with site supervisor on daily fixture sign-offs',
+    ],
+    city: 'Bangalore',
+    area: 'Koramangala',
+    duration: 'Ongoing (until mutually concluded)',
+    payRate: 900,
+    payType: 'Daily',
+    jobType: 'Daily Wage',
+    workersNeeded: 3,
+    workersHired: 1,
+    deadline: 'Immediate',
+    status: 'Open',
+    createdAt: 'Today',
+  },
+  {
+    id: 'job-102',
+    employerId: 'demo-employer-1',
+    employerName: 'Brigade Construction & Interiors',
+    employerLogo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=150&q=80',
+    employerRating: 4.8,
+    title: 'Commercial Office 3-Phase Rewiring',
+    skillCategory: 'Electrician',
+    description: 'Need certified electricians for cable conduit laying and server rack power distribution units in Whitefield tech park.',
+    responsibilities: [
+      'Install cable trays and trunking systems',
+      'Terminate 3-phase DB panels according to blueprint',
+    ],
+    city: 'Bangalore',
+    area: 'Whitefield',
+    duration: 'Ongoing (until mutually concluded)',
+    payRate: 1000,
+    payType: 'Daily',
+    jobType: 'Contract',
+    workersNeeded: 2,
+    workersHired: 0,
+    deadline: 'Immediate',
+    status: 'Open',
+    createdAt: 'Yesterday',
+  },
+];
 
-export const INITIAL_HIRE_REQUESTS: HireRequest[] = [];
+export const INITIAL_HIRE_REQUESTS: HireRequest[] = [
+  {
+    id: 'hr-demo-1',
+    jobId: 'job-101',
+    jobTitle: 'High-Rise Residential Plumbing Overhaul',
+    employerId: 'demo-employer-1',
+    employerName: 'Brigade Construction & Interiors',
+    employerLogo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=150&q=80',
+    employerPhone: '+91 98860 54321',
+    workerId: 'demo-worker-1',
+    workerName: 'Ravi Kumar',
+    workerSkill: 'Plumber',
+    workerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=250&q=80',
+    proposedWage: 900,
+    payType: 'Daily',
+    startDate: 'Yesterday',
+    duration: 'Ongoing (until mutually concluded)',
+    location: 'Koramangala, Bangalore',
+    message: 'Welcome to the assignment, Ravi! Looking forward to having your plumbing expertise on site.',
+    status: 'Accepted',
+    createdAt: 'Yesterday',
+  },
+];
 
 export const INITIAL_APPLICATIONS: JobApplication[] = [];
 
-export const INITIAL_REVIEWS: Review[] = [];
+export const INITIAL_REVIEWS: Review[] = [
+  {
+    id: 'rev-demo-1',
+    targetId: 'demo-worker-1',
+    reviewerName: 'Prestige Falcon City',
+    reviewerAvatar: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=150&q=80',
+    reviewerRole: 'employer',
+    rating: 5,
+    comment: 'Exceptional plumbing craftsmanship and punctuality. Solved multiple complex pipe issues with ease.',
+    jobTitle: 'Lead Pipeline Specialist',
+    date: '2 weeks ago',
+  },
+];
 
-export const INITIAL_NOTIFICATIONS: NotificationItem[] = [];
+export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: 'notif-demo-1',
+    recipientRole: 'worker',
+    recipientId: 'demo-worker-1',
+    title: 'Assignment Active! 🛠️',
+    message: 'Brigade Construction & Interiors hired you for High-Rise Residential Plumbing Overhaul.',
+    type: 'completion',
+    read: false,
+    timestamp: 'Yesterday',
+    actionTab: 'requests',
+  },
+];

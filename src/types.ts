@@ -17,7 +17,7 @@ export type WorkerAvailability = 'available' | 'unavailable' | 'busy' | 'hired';
 
 export type JobStatus = 'Open' | 'Filled' | 'Closed';
 
-export type HireRequestStatus = 'Pending' | 'Accepted' | 'Declined' | 'Completed';
+export type HireRequestStatus = 'Pending' | 'Accepted' | 'WorkCompleted' | 'Completed' | 'Declined';
 
 export type ApplicationStatus = 'Pending' | 'Accepted' | 'Declined';
 
