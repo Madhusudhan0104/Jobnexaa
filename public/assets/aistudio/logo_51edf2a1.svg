@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A3C6E" />
+      <stop offset="100%" stop-color="#102646" />
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F97316" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+    <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0EA5E9" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  
+  <!-- App Background Circle/Squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#primaryGrad)" />
+  
+  <!-- Subtle Grid Accent -->
+  <circle cx="256" cy="256" r="180" stroke="#25549A" stroke-width="2" stroke-dasharray="6 8" opacity="0.4" />
+  
+  <!-- Location Pin / Connection Pulse Shape -->
+  <g filter="url(#shadow)">
+    <!-- Base Node Connections -->
+    <path d="M160 330 L256 220 L352 330" stroke="#0EA5E9" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.8" />
+    <circle cx="160" cy="330" r="28" fill="url(#tealGrad)" />
+    <circle cx="352" cy="330" r="28" fill="url(#tealGrad)" />
+    
+    <!-- Worker/Employer Link Central Shield -->
+    <path d="M256 120 C190 120 170 170 170 240 C170 320 256 390 256 390 C256 390 342 320 342 240 C342 170 322 120 256 120 Z" fill="url(#orangeGrad)" />
+    
+    <!-- Central Icon: Connected Handshake & Wrench/Gear Motif -->
+    <circle cx="256" cy="210" r="32" fill="#FFFFFF" />
+    
+    <!-- Dynamic Lightning / Connection Spark -->
+    <path d="M250 250 L275 295 L252 295 L262 335 L235 285 L254 285 Z" fill="#FFFFFF" />
+  </g>
+</svg>
